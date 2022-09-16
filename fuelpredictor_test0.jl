@@ -39,7 +39,7 @@ function getSheetsInfo(xlfile)
     end
     return sheets[2:end], sheetSizes
 end        
-
+#=
 function makeDataFrameFromSheet(xlfile, sheetName, range1, range2)
     range = string(range1,":",range2)
     df = DataFrame(xlfile[sheetName][range],:auto)
@@ -56,8 +56,28 @@ function getdfNames(df, xlfile, sheetName, range1, range2)
     names = xlfile[sheetName][range]
     rename!(df, Symbol.(vec(names)))
     return df
+end
+
+These two functions were meant to simplify things, but there is some problem with the 
+alignment of indices, so we're writing a function that does everything in one go and then 
+reformats the names properly
+
+=#
+
+function makeDataFrameFromSheet(xlfile, sheetName)
+    ssize = size(xlfile[sheetName][:])
+    #every sheet has the final column missing and final row missing
+    df = DataFrame(xlfile[sheetName][:],:auto)[3:end-1,1:end-1]
+    newnames = map(n-> df[1,n], collect(1:size(df)[2]))
+    rename!(df,newnames)
+    df = df[2:end,:]
+    return df
 end    
 
+
+
+
+#=
 function combineAllSheets(xlfile)
     #betagam is a global vector of xlfile possible column names up to 702 columns
     sheetNames, sheetSizes = getSheetsInfo(xlfile)
@@ -88,6 +108,26 @@ function combineAllSheets(xlfile)
     return big_df
 end    
 
+Again, combine all sheets was too complicated, this will be a simplified method.
+
+=#
+
+function combineAllSheets(xlfile)
+    sheets = XLSX.sheetnames(xlfile)[2:end] #removing the "content" tab
+    dfs = []
+    for s in sheets
+        df = makeDataFrameFromSheet(xlfile, s)
+        push!(dfs,df)
+    end    
+    big_df = dfs[1]
+    L = length(dfs)
+    if L > 1
+        for k = 2:L
+            big_df = innerjoin(big_df, dfs[k],on = :Date)
+        end    
+    end #if
+    return big_df
+end #function        
 
 
 

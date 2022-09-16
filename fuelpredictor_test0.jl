@@ -37,7 +37,7 @@ function getSheetsInfo(xlfile)
         sheetSize = size(xf1[sheet][:])
         push!(sheetSizes, sheetSize)
     end
-    return sheets, sheetSizes
+    return sheets[2:end], sheetSizes
 end        
 
 function makeDataFrameFromSheet(xlfile, sheetName, range1, range2)
@@ -68,9 +68,9 @@ function combineAllSheets(xlfile)
         data_range1 = "A4"
         
         data_range2 = string(betagam[ssize[2]],ssize[1])
-        tempdf = makeDataFrameFromSheet(xlfile, s, data_range1, data_range2)
+        tempdf = makeDataFrameFromSheet(xlfile, sname, data_range1, data_range2)
         name_range1 = "A3"
-        name_range2 = string(betagam(ssize[2]),3) #the third row is the row of names
+        name_range2 = string(betagam[ssize[2]],3) #the third row is the row of names
         try
             tempdf = getdfNames(tempdf, xlfile, sname, name_range1, name_range2)
             push!(dfs, tempdf)

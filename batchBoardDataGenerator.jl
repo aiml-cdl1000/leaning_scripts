@@ -113,9 +113,11 @@ dataDict = JSON.parse(mydata);
 
 using CSV, DataFrames, StatsBase 
 
-zipdf = CSV,read("/home/oem/CDL1000/data/external/uszips3.csv", DataFrame)
+zipdf = CSV.read("/home/oem/CDL1000/data/external/uszips3.csv", DataFrame)
 zipdf = select(zipdf,[:zip,:latitude,:longitude,:population,:density])
 zipdf = dropmissing(zipdf)
+
+comdf = CSV.File("/home/oem/CDL1000/data/companywide/simplifiedTruckCommodities.csv") |> DataFrame
 
 
 #=
@@ -232,7 +234,7 @@ end
 
 
 
-function simpleSampler(nSamples, postalcodedf)
+function simpleSampler(nSamples, postalcodedf, commoditydf)
     #=
     postal code df will have only 
     zipcodes, lat,long, population, and density
@@ -253,6 +255,11 @@ function simpleSampler(nSamples, postalcodedf)
     inicios, terminados = makeRandomDates(nSamples)
     sample_df = [origins destinations]
     insertcols!(sample_df, :date => inicios, :date_end => terminados)
+
+    commodityidx = sample(collect(1:size(commoditydf)[1]), nSamples)
+    comdf = commoditydf[commodityidx,:]
+    sample_df = [sample_df comdf]
+
     return sample_df
 end
 
